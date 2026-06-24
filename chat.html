@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BilChat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0A0F1E;
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: #111827;
+      border-bottom: 1px solid #1F2937;
+      flex-shrink: 0;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #1E6FFF;
+    }
+
+    .topbar h1 { font-size: 18px; font-weight: 700; }
+
+    .partner-info {
+      font-size: 13px;
+      color: #9CA3AF;
+    }
+
+    .partner-info span { color: white; font-weight: 500; }
+
+    /* ── Video area ── */
+    .videos {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 12px;
+      min-height: 0;
+    }
+
+    .video-box {
+      position: relative;
+      background: #111827;
+      border: 1px solid #1F2937;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video-label {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .avatar-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: #4B5563;
+    }
+
+    .avatar-circle {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #1F2937;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 700;
+      color: #6B7280;
+    }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 16px;
+      background: #111827;
+      border-top: 1px solid #1F2937;
+      flex-shrink: 0;
+    }
+
+    .ctrl-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      background: #1F2937;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 20px;
+      color: white;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      transition: background 0.15s, transform 0.1s;
+      min-width: 72px;
+    }
+
+    .ctrl-btn:hover { background: #374151; }
+    .ctrl-btn:active { transform: scale(0.96); }
+    .ctrl-btn.off { background: #374151; color: #9CA3AF; }
+
+    .ctrl-btn svg { width: 22px; height: 22px; }
+
+    .ctrl-btn.next {
+      background: #1E6FFF;
+      padding: 12px 28px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .ctrl-btn.next:hover { background: #1a5fe0; }
+
+    .ctrl-btn.leave {
+      background: #DC2626;
+    }
+    .ctrl-btn.leave:hover { background: #b91c1c; }
+
+    /* ── Overlay screens ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,15,30,0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 100;
+    }
+
+    .overlay.hidden { display: none; }
+
+    .overlay h2 { font-size: 22px; font-weight: 700; }
+    .overlay p  { color: #6B7280; font-size: 14px; text-align: center; max-width: 280px; }
+
+    .dot-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1E6FFF;
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); opacity: 1; }
+      50% { transform: translateY(-8px); opacity: 0.5; }
+    }
+
+    .overlay-btn {
+      margin-top: 8px;
+      background: #1E6FFF;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 32px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .overlay-btn:hover { background: #1a5fe0; }
+
+    .overlay-btn.secondary {
+      background: transparent;
+      border: 1px solid #374151;
+      color: #9CA3AF;
+    }
+    .overlay-btn.secondary:hover { background: #1F2937; color: white; }
+  </style>
+</head>
+<body>
+
+<!-- Searching overlay -->
+<div class="overlay" id="searchingOverlay">
+  <div class="dot-row">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+  <h2>Finding someone...</h2>
+  <p>Waiting for another Bilim student to connect</p>
+  <button class="overlay-btn secondary" onclick="cancelAndLeave()">Cancel</button>
+</div>
+
+<!-- Disconnected overlay -->
+<div class="overlay hidden" id="disconnectedOverlay">
+  <h2>Conversation ended</h2>
+  <p>Your partner left the chat</p>
+  <button class="overlay-btn" onclick="findNext()">Find Next</button>
+  <button class="overlay-btn secondary" onclick="goHome()">Go Home</button>
+</div>
+
+<!-- Main UI -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-icon">
+      <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+        <path d="M6 8C6 6.895 6.895 6 8 6H24C25.105 6 26 6.895 26 8V20C26 21.105 25.105 22 24 22H18L12 26V22H8C6.895 22 6 21.105 6 20V8Z" fill="white"/>
+      </svg>
+    </div>
+    <h1>BilChat</h1>
+  </div>
+  <div class="partner-info" id="partnerInfo">Connecting...</div>
+</div>
+
+<div class="videos">
+  <!-- Remote video -->
+  <div class="video-box" id="remoteBox">
+    <div class="avatar-placeholder" id="remoteAvatar">
+      <div class="avatar-circle" id="remoteInitial">?</div>
+      <span id="remoteNameLabel">Waiting...</span>
+    </div>
+    <video id="remoteVideo" autoplay playsinline style="display:none"></video>
+    <div class="video-label" id="remoteLabel"></div>
+  </div>
+
+  <!-- Local video -->
+  <div class="video-box">
+    <div class="avatar-placeholder" id="localAvatar">
+      <div class="avatar-circle" id="localInitial">?</div>
+      <span>You</span>
+    </div>
+    <video id="localVideo" autoplay playsinline muted style="display:none"></video>
+    <div class="video-label" id="localLabel"></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" id="micBtn" onclick="toggleMic()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+    </svg>
+    Mic
+  </button>
+
+  <button class="ctrl-btn" id="camBtn" onclick="toggleCam()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M23 7l-7 5 7 5V7z"/>
+      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+    </svg>
+    Camera
+  </button>
+
+  <button class="ctrl-btn next" onclick="findNext()">
+    Next →
+  </button>
+
+  <button class="ctrl-btn leave" onclick="goHome()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+    </svg>
+    Leave
+  </button>
+</div>
+
+<script>
+  const LivekitClient = window.LivekitClient
+
+  let room = null
+  let micEnabled = true
+  let camEnabled = true
+  let user = null
+  let matchData = null
+
+  function init() {
+    const raw = sessionStorage.getItem('bilchat_user')
+    if (!raw) { window.location.href = 'index.html'; return }
+
+    user = JSON.parse(raw)
+    matchData = JSON.parse(sessionStorage.getItem('bilchat_match') || 'null')
+
+    document.getElementById('localInitial').textContent = user.name[0].toUpperCase()
+    document.getElementById('localLabel').textContent = user.name
+
+    if (matchData && matchData.matched) {
+      showSearching(false)
+      connectToRoom(matchData.room, matchData.partnerUser)
+    } else {
+      // came here without a match — go find one
+      findMatch()
+    }
+  }
+
+  function showSearching(show) {
+    document.getElementById('searchingOverlay').classList.toggle('hidden', !show)
+  }
+
+  function showDisconnected(show) {
+    document.getElementById('disconnectedOverlay').classList.toggle('hidden', !show)
+  }
+
+  async function findMatch() {
+    showSearching(true)
+    showDisconnected(false)
+
+    try {
+      const res = await fetch('/api/queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user),
+      })
+      const data = await res.json()
+
+      if (data.matched) {
+        sessionStorage.setItem('bilchat_match', JSON.stringify(data))
+        showSearching(false)
+        connectToRoom(data.room, data.partnerUser)
+      } else {
+        showSearching(false)
+        showDisconnected(false)
+        alert('No one online right now. Try again!')
+      }
+    } catch {
+      showSearching(false)
+      alert('Server error. Make sure the server is running.')
+    }
+  }
+
+  async function connectToRoom(roomName, partnerUser) {
+    if (room) {
+      await room.disconnect()
+      room = null
+    }
+
+    // Update partner info in UI
+    if (partnerUser) {
+      document.getElementById('partnerInfo').innerHTML =
+        `Talking with <span>${partnerUser.name}</span> · ${partnerUser.school} · Grade ${partnerUser.grade}`
+      document.getElementById('remoteInitial').textContent = partnerUser.name[0].toUpperCase()
+      document.getElementById('remoteNameLabel').textContent = partnerUser.name
+      document.getElementById('remoteLabel').textContent = partnerUser.name
+    }
+
+    try {
+      const identity = user.name.replace(/\s+/g, '_') + '_' + Date.now()
+      const tokenRes = await fetch(
+        `/api/token?room=${encodeURIComponent(roomName)}&identity=${encodeURIComponent(identity)}&name=${encodeURIComponent(user.name)}`
+      )
+      const { token, url } = await tokenRes.json()
+
+      room = new LivekitClient.Room()
+
+      room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, pub, participant) => {
+        if (track.kind === 'video') {
+          const el = document.getElementById('remoteVideo')
+          track.attach(el)
+          el.style.display = 'block'
+          document.getElementById('remoteAvatar').style.display = 'none'
+        } else if (track.kind === 'audio') {
+          const audioEl = track.attach()
+          document.body.appendChild(audioEl)
+        }
+      })
+
+      room.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track) => {
+        track.detach()
+        if (track.kind === 'video') {
+          document.getElementById('remoteVideo').style.display = 'none'
+          document.getElementById('remoteAvatar').style.display = 'flex'
+        }
+      })
+
+      room.on(LivekitClient.RoomEvent.ParticipantDisconnected, () => {
+        showDisconnected(true)
+      })
+
+      room.on(LivekitClient.RoomEvent.Disconnected, () => {
+        showDisconnected(true)
+      })
+
+      await room.connect(url, token)
+
+      // Publish local camera and mic
+      await room.localParticipant.enableCameraAndMicrophone()
+
+      const camTrack = room.localParticipant.getTrackPublication(LivekitClient.Track.Source.Camera)
+      if (camTrack && camTrack.track) {
+        const localVid = document.getElementById('localVideo')
+        camTrack.track.attach(localVid)
+        localVid.style.display = 'block'
+        document.getElementById('localAvatar').style.display = 'none'
+      }
+
+    } catch (err) {
+      console.error(err)
+      alert('Could not connect to call. Check your LiveKit credentials.')
+    }
+  }
+
+  async function toggleMic() {
+    micEnabled = !micEnabled
+    if (room) await room.localParticipant.setMicrophoneEnabled(micEnabled)
+    const btn = document.getElementById('micBtn')
+    btn.classList.toggle('off', !micEnabled)
+    btn.querySelector('svg').innerHTML = micEnabled
+      ? '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>'
+      : '<line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23M12 19v4M8 23h8"/>'
+  }
+
+  async function toggleCam() {
+    camEnabled = !camEnabled
+    if (room) await room.localParticipant.setCameraEnabled(camEnabled)
+    document.getElementById('camBtn').classList.toggle('off', !camEnabled)
+
+    const localVid = document.getElementById('localVideo')
+    const localAvatar = document.getElementById('localAvatar')
+    localVid.style.display = camEnabled ? 'block' : 'none'
+    localAvatar.style.display = camEnabled ? 'none' : 'flex'
+  }
+
+  async function findNext() {
+    if (room) { await room.disconnect(); room = null }
+    document.getElementById('remoteVideo').style.display = 'none'
+    document.getElementById('remoteAvatar').style.display = 'flex'
+    document.getElementById('partnerInfo').textContent = 'Connecting...'
+    await findMatch()
+  }
+
+  async function cancelAndLeave() {
+    if (room) { await room.disconnect(); room = null }
+    window.location.href = 'index.html'
+  }
+
+  function goHome() {
+    if (room) room.disconnect()
+    window.location.href = 'index.html'
+  }
+
+  init()
+</script>
+
+</body>
+</html>

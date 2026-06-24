@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BilChat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0A0F1E;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .logo-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: #1E6FFF;
+      margin-bottom: 16px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .header p {
+      color: #6B7280;
+      font-size: 14px;
+      margin-top: 6px;
+    }
+
+    /* Card */
+    .card {
+      background: #111827;
+      border: 1px solid #1F2937;
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #D1D5DB;
+      margin-bottom: 8px;
+    }
+
+    input, select {
+      width: 100%;
+      background: #0A0F1E;
+      border: 1px solid #1F2937;
+      border-radius: 12px;
+      padding: 13px 16px;
+      color: white;
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.15s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    input::placeholder {
+      color: #374151;
+    }
+
+    input:focus, select:focus {
+      border-color: #1E6FFF;
+    }
+
+    input.error, select.error {
+      border-color: #EF4444;
+    }
+
+    .error-msg {
+      color: #F87171;
+      font-size: 12px;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .error-msg.visible {
+      display: block;
+    }
+
+    /* Select wrapper for custom arrow */
+    .select-wrap {
+      position: relative;
+    }
+
+    .select-wrap::after {
+      content: '';
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid #6B7280;
+      pointer-events: none;
+    }
+
+    select option {
+      background: #111827;
+    }
+
+    /* Row for grade + sex */
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .row .field {
+      margin-bottom: 0;
+    }
+
+    /* Button */
+    .btn {
+      width: 100%;
+      background: #1E6FFF;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      border: none;
+      border-radius: 12px;
+      padding: 15px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      margin-top: 4px;
+    }
+
+    .btn:hover { background: #1a5fe0; }
+    .btn:active { transform: scale(0.98); }
+
+    .footer {
+      text-align: center;
+      color: #374151;
+      font-size: 12px;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <div class="header">
+    <div class="logo-icon">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <path d="M6 8C6 6.895 6.895 6 8 6H24C25.105 6 26 6.895 26 8V20C26 21.105 25.105 22 24 22H18L12 26V22H8C6.895 22 6 21.105 6 20V8Z" fill="white"/>
+      </svg>
+    </div>
+    <h1>BilChat</h1>
+    <p>Meet someone new from your Bilim community</p>
+  </div>
+
+  <form class="card" id="regForm" novalidate>
+
+    <div class="field">
+      <label for="name">Your Name</label>
+      <input type="text" id="name" placeholder="" />
+      <div class="error-msg" id="name-err">Enter your name</div>
+    </div>
+
+    <div class="field">
+      <label for="school">Your School</label>
+      <input type="text" id="school" placeholder="" />
+      <div class="error-msg" id="school-err">Enter your school</div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="grade">Grade</label>
+        <div class="select-wrap">
+          <select id="grade">
+            <option value="">Grade</option>
+            <option>7</option>
+            <option>8</option>
+            <option>9</option>
+            <option>10</option>
+            <option>11</option>
+          </select>
+        </div>
+        <div class="error-msg" id="grade-err">Select grade</div>
+      </div>
+
+      <div class="field">
+        <label for="sex">Sex</label>
+        <div class="select-wrap">
+          <select id="sex">
+            <option value="">Sex</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div class="error-msg" id="sex-err">Select sex</div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn">Start Conversation</button>
+
+  </form>
+
+  <p class="footer">BilChat — only for Bilim Innovation students</p>
+
+</div>
+
+<script>
+  const form = document.getElementById('regForm');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const name   = document.getElementById('name');
+    const school = document.getElementById('school');
+    const grade  = document.getElementById('grade');
+    const sex    = document.getElementById('sex');
+
+    let valid = true;
+
+    function check(el, errId) {
+      const err = document.getElementById(errId);
+      if (!el.value.trim()) {
+        el.classList.add('error');
+        err.classList.add('visible');
+        valid = false;
+      } else {
+        el.classList.remove('error');
+        err.classList.remove('visible');
+      }
+    }
+
+    check(name,   'name-err');
+    check(school, 'school-err');
+    check(grade,  'grade-err');
+    check(sex,    'sex-err');
+
+    if (!valid) return;
+
+    const user = {
+      name:   name.value.trim(),
+      school: school.value.trim(),
+      grade:  grade.value,
+      sex:    sex.value,
+    };
+
+    sessionStorage.setItem('bilchat_user', JSON.stringify(user));
+
+    const btn = document.querySelector('.btn');
+    btn.disabled = true;
+    btn.textContent = 'Finding match...';
+
+    fetch('/api/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(user),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.matched) {
+          sessionStorage.setItem('bilchat_match', JSON.stringify(data));
+          window.location.href = 'chat.html';
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'Start Conversation';
+          alert('No one is online right now. Try again!');
+        }
+      })
+      .catch(() => {
+        btn.disabled = false;
+        btn.textContent = 'Start Conversation';
+        alert('Could not connect to server. Make sure it is running.');
+      });
+  });
+
+  // Clear error on input
+  ['name','school','grade','sex'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', function() {
+      this.classList.remove('error');
+      document.getElementById(id + '-err').classList.remove('visible');
+    });
+  });
+</script>
+
+</body>
+</html>
